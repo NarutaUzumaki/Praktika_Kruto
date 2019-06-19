@@ -39,30 +39,34 @@ import com.karumi.dexter.listener.single.PermissionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements RecyclerAdapter.ItemClickListener {
 
     RecyclerAdapter adapterum;
 
+
+    final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
     RecyclerView songListView;
     String[] items;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        songListView =  findViewById(R.id.songListView);
+        songListView = findViewById(R.id.songListView);
 
         runtimePermission();
 
         RecyclerView recyclerView = findViewById(R.id.songListView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapterum = new RecyclerAdapter(this, Arrays.asList(items));
+        adapterum = new RecyclerAdapter( Arrays.asList(items), this);
         adapterum.setClickListener(this);
         recyclerView.setAdapter(adapterum);
     }
 
-    public void runtimePermission(){
+    public void runtimePermission() {
         Dexter.withActivity(this)
                 .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                 .withListener(new PermissionListener() {
@@ -83,15 +87,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
                 }).check();
     }
 
-    public ArrayList<File> findSong(File file){
+    public ArrayList<File> findSong(File file) {
         ArrayList<File> arrayList = new ArrayList<>();
 
         File[] files = file.listFiles();
-        for(File singleFile : files){
-            if (singleFile.isDirectory() && !singleFile.isHidden()){
+        for (File singleFile : files) {
+            if (singleFile.isDirectory() && !singleFile.isHidden()) {
                 arrayList.addAll(findSong(singleFile));
-            }else {
-                if (singleFile.getName().endsWith(".mp3") || singleFile.getName().endsWith(".wav")){
+            } else {
+                if (singleFile.getName().endsWith(".mp3") || singleFile.getName().endsWith(".wav")) {
                     arrayList.add(singleFile);
                 }
             }
@@ -101,38 +105,58 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
     }
 
     void display() {
-        final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
+        //final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
         items = new String[songs.size()];
 
         for (int i = 0; i < songs.size(); i++) {
-            items[i] = (i+1) + "." +  songs.get(i).getName().toString().replace(".mp3", "").replace(".wav", "");
+            items[i] = (i + 1) + "." + songs.get(i).getName().toString().replace(".mp3", "").replace(".wav", "");
             //(i+1) служит номером композиции в списке, можно удалить, если проблемы
         }
 
         //myAdapter
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,items);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items);
         songListView.setAdapter(adapterum);
 
 
-        songListView.setItemAnimator(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String songName = songListView.getItemAtPosition(position).toString().replace("mp3", "");
 
-                startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
-                        .putExtra("songname", songName)
-                        .putExtra("pos", position));
-            }
+//        songListView.setAdapter(new RecyclerAdapter(Arrays.asList(items), new RecyclerAdapter.ItemClickListener() {
+//            @Override
+//            public void onItemClick(View view, int position) {
+//                String songName = adapterum.getItem(position).replace("mp3", "");
+//
+//                startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
+//                        .putExtra("songname", songName)
+//                        .putExtra("pos", position));
+//            }
 
-            public void onBindViewHolder(){
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position) {
+//                String songName = adapterum.getItem(position).replace("mp3", "");
+//
+//                startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
+//                        .putExtra("songname", songName)
+//                        .putExtra("pos", position));
+//            }
+//        });
 
-            }
-        });
-    }
+//        @Override
+//        public void onItemClick(View view,int position){
+//            String songName = adapterum.getItem(position).replace("mp3", "");
+//
+//            startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
+//                    .putExtra("songname", songName)
+//                    .putExtra("pos", position));
+//        }
+//    }));
 
+}
 
     @Override
     public void onItemClick(View view, int position) {
+        String songName = adapterum.getItem(position).replace("mp3", "");
 
+        startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
+                .putExtra("songname", songName)
+                .putExtra("pos", position));
     }
 }

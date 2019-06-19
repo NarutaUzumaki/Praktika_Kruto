@@ -16,7 +16,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     private ItemClickListener mClickListener;
 
 
-    RecyclerAdapter(Context context, List<String> data) {
+    RecyclerAdapter( List<String> data, Context context) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -69,4 +69,5 @@ public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickL
 public interface ItemClickListener {
     void onItemClick(View view, int position);
 }
+
 }
