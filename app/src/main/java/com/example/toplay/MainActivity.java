@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
 
     @Override
     public void onItemClick(View view, int position) {
-        String songName = adapterum.getItem(position).replace("mp3", "");
+        String songName = adapterum.getItem(position).toString().replace("mp3", "");
 
         startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
                 .putExtra("songname", songName)
