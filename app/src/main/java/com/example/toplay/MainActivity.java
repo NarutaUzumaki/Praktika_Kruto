@@ -8,6 +8,7 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.PorterDuff;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -37,6 +38,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,6 +89,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
                 }).check();
     }
 
+    AsyncTask.execute(new Runnable(){
+        URL DeezerEndPoint = new URL("https://api.deezer.com/version/service/id/method/?parameters");
+    });
+
     public ArrayList<File> findSong(File file) {
         ArrayList<File> arrayList = new ArrayList<>();
 
@@ -114,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         }
 
         //myAdapter
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items);
+        //final RecyclerAdapter adapter = new RecyclerAdapter(items, android.R.layout.simple_list_item_1);
         songListView.setAdapter(adapterum);
 
 
