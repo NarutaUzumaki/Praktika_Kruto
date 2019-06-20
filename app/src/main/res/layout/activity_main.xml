@@ -9,10 +9,27 @@
     <!--android:padding="10dp"-->
 
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/songListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/songListView"
         android:background="@drawable/background"
+
         ></android.support.v7.widget.RecyclerView>
+
+    <TextView
+        android:id="@+id/test"
+        android:layout_width="match_parent"
+        android:layout_height="66dp"
+        android:layout_alignStart="@+id/songListView"
+        android:layout_alignLeft="@+id/songListView"
+        android:layout_alignEnd="@+id/songListView"
+        android:layout_alignRight="@+id/songListView"
+        android:layout_alignBottom="@+id/songListView"
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginBottom="66dp"
+        android:text="asdsfdsd"/>
 
 </RelativeLayout>

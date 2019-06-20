@@ -30,12 +30,22 @@ import android.widget.TextView;
 import android.support.design.widget.Snackbar;
 
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.net.URL;
@@ -46,7 +56,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements RecyclerAdapter.ItemClickListener {
 
     RecyclerAdapter adapterum;
-
+    RequestQueue mQueue;
+    TextView text;
 
     final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
     RecyclerView songListView;
@@ -57,9 +68,12 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        text = findViewById(R.id.test);
         songListView = findViewById(R.id.songListView);
 
         runtimePermission();
+        mQueue = Volley.newRequestQueue(this);
+        JsonParse();
 
         RecyclerView recyclerView = findViewById(R.id.songListView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -89,9 +103,37 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
                 }).check();
     }
 
-    AsyncTask.execute(new Runnable(){
-        URL DeezerEndPoint = new URL("https://api.deezer.com/version/service/id/method/?parameters");
-    });
+    private void JsonParse(){
+        String url = "https://api.deezer.com/track/3135556";
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new
+                Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray jsonArray = response.getJSONArray("contributors");
+
+                            for(int i = 0; i< jsonArray.length(); i++){
+                                JSONObject contributors = jsonArray.getJSONObject(i);
+
+                                int id = contributors.getInt("id");
+                                String name = contributors.getString("name");
+
+                                text.append(String.valueOf(id) +", " + name + "\n\n");
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+            }
+        });
+        mQueue.add(request);
+    }
 
     public ArrayList<File> findSong(File file) {
         ArrayList<File> arrayList = new ArrayList<>();
