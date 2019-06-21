@@ -36,6 +36,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.deezer.sdk.network.connect.DeezerConnect;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
     RequestQueue mQueue;
     TextView text;
 
+    //String rez;
     final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
     RecyclerView songListView;
     String[] items;
@@ -68,12 +70,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        String appID = "355244";
+        DeezerConnect deezerConnect = new DeezerConnect(this, appID);
+
         text = findViewById(R.id.test);
         songListView = findViewById(R.id.songListView);
 
         runtimePermission();
         mQueue = Volley.newRequestQueue(this);
         JsonParse();
+
+
 
         RecyclerView recyclerView = findViewById(R.id.songListView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -121,6 +128,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
 
                                 text.append(String.valueOf(id) +", " + name + "\n\n");
 
+                                //rez = String.valueOf(id) + name;
+
+
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -159,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         for (int i = 0; i < songs.size(); i++) {
             items[i] = (i + 1) + "." + songs.get(i).getName().toString().replace(".mp3", "").replace(".wav", "");
             //(i+1) служит номером композиции в списке, можно удалить, если проблемы
+            //items[i+1] = rez;
         }
 
         //myAdapter
