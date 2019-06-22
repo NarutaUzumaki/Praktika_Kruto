@@ -36,7 +36,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.deezer.sdk.model.Permissions;
 import com.deezer.sdk.network.connect.DeezerConnect;
+import com.deezer.sdk.network.connect.event.DialogListener;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -73,12 +75,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         String appID = "355244";
         DeezerConnect deezerConnect = new DeezerConnect(this, appID);
 
+        deezerConnect.authorize(this,permissions,listener);
+
         text = findViewById(R.id.test);
         songListView = findViewById(R.id.songListView);
 
         runtimePermission();
         mQueue = Volley.newRequestQueue(this);
-        JsonParse();
+        //JsonParse();
 
 
 
@@ -110,40 +114,64 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
                 }).check();
     }
 
-    private void JsonParse(){
-        String url = "https://api.deezer.com/track/3135556";
+//    private void JsonParse(){
+//        String url = "https://api.deezer.com/track/3135556";
+//
+//        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new
+//                Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        try {
+//                            JSONArray jsonArray = response.getJSONArray("contributors");
+//
+//                            for(int i = 0; i< jsonArray.length(); i++){
+//                                JSONObject contributors = jsonArray.getJSONObject(i);
+//
+//                                int id = contributors.getInt("id");
+//                                String name = contributors.getString("name");
+//
+//                                text.append(String.valueOf(id) +", " + name + "\n\n");
+//
+//                                //rez = String.valueOf(id) + name;
+//
+//
+//                            }
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                error.printStackTrace();
+//            }
+//        });
+//        mQueue.add(request);
+//    }
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new
-                Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            JSONArray jsonArray = response.getJSONArray("contributors");
+    String[] permissions = new String[] {
+            Permissions.BASIC_ACCESS,
+            Permissions.MANAGE_LIBRARY,
+            Permissions.LISTENING_HISTORY
+    };
+    DialogListener listener = new DialogListener() {
+        @Override
+        public void onComplete(Bundle bundle) {
 
-                            for(int i = 0; i< jsonArray.length(); i++){
-                                JSONObject contributors = jsonArray.getJSONObject(i);
+        }
 
-                                int id = contributors.getInt("id");
-                                String name = contributors.getString("name");
+        @Override
+        public void onCancel() {
 
-                                text.append(String.valueOf(id) +", " + name + "\n\n");
+        }
 
-                                //rez = String.valueOf(id) + name;
+        @Override
+        public void onException(Exception e) {
+
+        }
+    };
 
 
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        });
-        mQueue.add(request);
-    }
 
     public ArrayList<File> findSong(File file) {
         ArrayList<File> arrayList = new ArrayList<>();
