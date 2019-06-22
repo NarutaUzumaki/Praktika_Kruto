@@ -3,6 +3,8 @@ package com.example.toplay;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.PorterDuff;
@@ -36,9 +38,19 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.deezer.sdk.model.Album;
 import com.deezer.sdk.model.Permissions;
 import com.deezer.sdk.network.connect.DeezerConnect;
+import com.deezer.sdk.network.connect.SessionStore;
 import com.deezer.sdk.network.connect.event.DialogListener;
+import com.deezer.sdk.network.request.DeezerRequest;
+import com.deezer.sdk.network.request.DeezerRequestFactory;
+import com.deezer.sdk.network.request.event.DeezerError;
+import com.deezer.sdk.network.request.event.JsonRequestListener;
+import com.deezer.sdk.network.request.event.RequestListener;
+import com.deezer.sdk.player.AlbumPlayer;
+import com.deezer.sdk.player.exception.TooManyPlayersExceptions;
+import com.deezer.sdk.player.networkcheck.WifiAndMobileNetworkStateChecker;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -76,6 +88,41 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         DeezerConnect deezerConnect = new DeezerConnect(this, appID);
 
         deezerConnect.authorize(this,permissions,listener);
+
+
+        SessionStore sessionStore = new SessionStore();
+        if (sessionStore.restore(deezerConnect, this)) {
+            // The restored session is valid, navigate to the Home Activity
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }
+
+        long artistId = 11472;
+        DeezerRequest request = DeezerRequestFactory.requestArtistAlbums(artistId);
+        // set a requestId, that will be passed on the listener's callback methods
+        request.setId("68a75437fc4a9c0feb175cbd391c8450");
+
+        // launch the request asynchronously
+        deezerConnect.requestAsync(request, listenerRequest);
+
+
+        AlbumPlayer albumPlayer = null;
+        try {
+            albumPlayer = new AlbumPlayer(getApplication(), deezerConnect, new WifiAndMobileNetworkStateChecker());
+
+        } catch (TooManyPlayersExceptions tooManyPlayersExceptions) {
+            tooManyPlayersExceptions.printStackTrace();
+        } catch (DeezerError deezerError) {
+            deezerError.printStackTrace();
+        }
+
+        // start playing music
+        long albumId = 89142;
+        albumPlayer.playAlbum(albumId);
+
+//        albumPlayer.stop();
+//        albumPlayer.release();
+
 
         text = findViewById(R.id.test);
         songListView = findViewById(R.id.songListView);
@@ -170,6 +217,42 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
 
         }
     };
+
+    RequestListener listenerRequest = new JsonRequestListener() {
+
+        public void onResult(Object result, Object requestId) {
+            List<Album> albums = (List<Album>) result;
+            // do something with the albums
+        }
+
+        public void onUnparsedResult(String requestResponse, Object requestId) {}
+
+        public void onException(Exception e, Object requestId) {}
+    };
+
+//    AlbumPlayer albumPlayer = new AlbumPlayer(application, deezerConnect, new WifiAndMobileNetworkStateChecker());
+//
+//    // start playing music
+//    long albumId = 89142;
+//albumPlayer.playAlbum(albumId);
+//
+//// ...
+//
+//// to make sure the player is stopped (for instance when the activity is closed)
+//albumPlayer.stop();
+//albumPlayer.release();
+
+//    // create the request
+//    long artistId = 11472;
+//    DeezerRequest request = DeezerRequestFactory.requestArtistAlbums(artistID);
+//
+//    // set a requestId, that will be passed on the listener's callback methods
+//    request.setId("myRequest");
+//
+//    // launch the request asynchronously
+//    deezerConnect.requestAsync(request, listener);
+
+
 
 
 
