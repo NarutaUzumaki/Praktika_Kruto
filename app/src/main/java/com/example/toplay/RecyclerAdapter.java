@@ -8,15 +8,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.deezer.sdk.model.Track;
+
 import java.util.List;
 
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
-    private List<String> mData;
+    private List<Track> mData;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
 
-    RecyclerAdapter( List<String> data, Context context) {
+    RecyclerAdapter(List<Track> data, Context context) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -30,8 +32,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerAdapter.ViewHolder holder, int position) {
-        String text = mData.get(position);
-        holder.myTextView.setText(text);
+        Track text = mData.get(position);
+        holder.myTextView.setText(text.getTitle());
     }
 
     @Override
@@ -56,7 +58,7 @@ public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickL
 }
 
     // convenience method for getting data at click position
-    String getItem(int id) {
+    Track getItem(int id) {
         return mData.get(id);
     }
 

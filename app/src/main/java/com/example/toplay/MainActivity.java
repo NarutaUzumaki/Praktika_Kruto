@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -40,6 +41,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.deezer.sdk.model.Album;
 import com.deezer.sdk.model.Permissions;
+import com.deezer.sdk.model.Track;
 import com.deezer.sdk.network.connect.DeezerConnect;
 import com.deezer.sdk.network.connect.SessionStore;
 import com.deezer.sdk.network.connect.event.DialogListener;
@@ -63,6 +65,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +81,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
     final ArrayList<File> songs = findSong(Environment.getExternalStorageDirectory());
     RecyclerView songListView;
     String[] items;
+    long albumId = 302127;
+//    String appID = "355244";
+//    DeezerConnect deezerConnect = new DeezerConnect(this, appID);
+    List<Track> tracks = new ArrayList<Track>();
+    Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,10 +94,29 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
 
         String appID = "355244";
         DeezerConnect deezerConnect = new DeezerConnect(this, appID);
+        //Context context = this;
 
         deezerConnect.authorize(this,permissions,listener);
 
+        DeezerRequest reqAlbum = DeezerRequestFactory.requestAlbumTracks(albumId);
+        deezerConnect.requestAsync(reqAlbum ,new JsonRequestListener(){
 
+            @Override
+            public void onException(Exception e, Object o) {
+
+            }
+
+            @Override
+            public void onResult(Object result, Object o1) {
+                tracks.clear();
+                tracks.addAll((List<Track>) result);
+            }
+
+            @Override
+            public void onUnparsedResult(String s, Object o) {
+
+            }
+        });
         SessionStore sessionStore = new SessionStore();
         if (sessionStore.restore(deezerConnect, this)) {
             // The restored session is valid, navigate to the Home Activity
@@ -105,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         // launch the request asynchronously
         deezerConnect.requestAsync(request, listenerRequest);
 
+        text = findViewById(R.id.test);
 
         AlbumPlayer albumPlayer = null;
         try {
@@ -117,14 +145,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         }
 
         // start playing music
-        long albumId = 89142;
+//        long albumId = 302127;
         albumPlayer.playAlbum(albumId);
+
 
 //        albumPlayer.stop();
 //        albumPlayer.release();
 
 
-        text = findViewById(R.id.test);
+
         songListView = findViewById(R.id.songListView);
 
         runtimePermission();
@@ -135,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
 
         RecyclerView recyclerView = findViewById(R.id.songListView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapterum = new RecyclerAdapter( Arrays.asList(items), this);
+        adapterum = new RecyclerAdapter( tracks, this);
         adapterum.setClickListener(this);
         recyclerView.setAdapter(adapterum);
     }
@@ -223,6 +252,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         public void onResult(Object result, Object requestId) {
             List<Album> albums = (List<Album>) result;
             // do something with the albums
+
         }
 
         public void onUnparsedResult(String requestResponse, Object requestId) {}
@@ -230,7 +260,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
         public void onException(Exception e, Object requestId) {}
     };
 
-//    AlbumPlayer albumPlayer = new AlbumPlayer(application, deezerConnect, new WifiAndMobileNetworkStateChecker());
+
+    //    AlbumPlayer albumPlayer = new AlbumPlayer(application, deezerConnect, new WifiAndMobileNetworkStateChecker());
 //
 //    // start playing music
 //    long albumId = 89142;
@@ -325,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.I
     public void onItemClick(View view, int position) {
         String songName = adapterum.getItem(position).toString().replace("mp3", "");
 
-        startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", songs)
+        startActivity(new Intent(getApplicationContext(), PlayerActivity.class).putExtra("songs", (Serializable) tracks)
                 .putExtra("songname", songName)
                 .putExtra("pos", position));
     }
