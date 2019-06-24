@@ -6,9 +6,9 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     >
-    <!--android:padding="10dp"-->
 
     <android.support.v7.widget.RecyclerView
+        android:paddingTop="50dp"
         android:id="@+id/songListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -30,7 +30,33 @@
         android:layout_marginEnd="0dp"
         android:layout_marginRight="0dp"
         android:layout_marginBottom="66dp"
+        android:text=""
         />
 
+    <RelativeLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="#80000000"
+        android:gravity="left"
+        >
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/duft"
+
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="Discovery album"
+            android:textColor="#4169E1"
+            android:textSize="20sp"
+            android:gravity="left"
+            android:paddingLeft="45dp"/>
+
+    </RelativeLayout>
 
 </RelativeLayout>

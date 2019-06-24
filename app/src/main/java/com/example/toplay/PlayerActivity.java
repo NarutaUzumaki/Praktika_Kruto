@@ -8,45 +8,65 @@ import android.net.Uri;
 import android.os.Trace;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.deezer.sdk.model.Album;
 import com.deezer.sdk.model.Track;
 import com.deezer.sdk.network.connect.DeezerConnect;
+import com.deezer.sdk.network.request.DeezerRequest;
+import com.deezer.sdk.network.request.DeezerRequestFactory;
 import com.deezer.sdk.network.request.event.DeezerError;
+import com.deezer.sdk.network.request.event.JsonRequestListener;
+import com.deezer.sdk.network.request.event.RequestListener;
+import com.deezer.sdk.player.AlbumPlayer;
+import com.deezer.sdk.player.Player;
 import com.deezer.sdk.player.PlayerWrapper;
 import com.deezer.sdk.player.TrackPlayer;
+import com.deezer.sdk.player.event.OnBufferErrorListener;
+import com.deezer.sdk.player.event.OnBufferProgressListener;
+import com.deezer.sdk.player.event.OnBufferStateChangeListener;
+import com.deezer.sdk.player.event.OnPlayerErrorListener;
+import com.deezer.sdk.player.event.OnPlayerProgressListener;
+import com.deezer.sdk.player.event.OnPlayerStateChangeListener;
 import com.deezer.sdk.player.event.PlayerState;
 import com.deezer.sdk.player.exception.TooManyPlayersExceptions;
 import com.deezer.sdk.player.networkcheck.WifiAndMobileNetworkStateChecker;
+import com.karumi.dexter.listener.single.DialogOnDeniedPermissionListener;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
-public class PlayerActivity extends AppCompatActivity {
+public class PlayerActivity extends AppCompatActivity implements Serializable {
 
-    static MediaPlayer projectMP;
+    private static final String TAG = "Player";
     int position;
-    ArrayList<Track> getSong;
+    List<Track> getSong = new ArrayList<Track>();
     Thread updateSeekBar;
     String sName;
 
-    PlayerWrapper mPlayer;
-    static TrackPlayer trackPL;
-//    String appID = "355244";
-//    DeezerConnect deezerConnect = new DeezerConnect(MainActivity, appID);
-    Context context;
+    TrackPlayer trackPL = null;
+
 
     Button btn_next, btn_previous, btn_pause;
     TextView songTextLabel;
     SeekBar songSeekbar;
+    public DeezerConnect deezerConnect;
+    TrackPlayer newPlayer;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
 
         btn_next = (Button) findViewById(R.id.next);
         btn_previous = (Button) findViewById(R.id.previous);
@@ -55,21 +75,29 @@ public class PlayerActivity extends AppCompatActivity {
         songTextLabel = (TextView) findViewById(R.id.songName);
         songSeekbar = (SeekBar) findViewById(R.id.seekBar);
 
-//        getSupportActionBar().setTitle("Now playing");
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-//        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        String appID = "355244";
+        deezerConnect = new DeezerConnect(this, appID);
+
+        try {
+            trackPL = new TrackPlayer(getApplication(), deezerConnect, new WifiAndMobileNetworkStateChecker());
+        } catch (TooManyPlayersExceptions tooManyPlayersExceptions) {
+            tooManyPlayersExceptions.printStackTrace();
+        } catch (DeezerError deezerError) {
+            deezerError.printStackTrace();
+        }
+
 
         updateSeekBar = new Thread(){
             @Override
             public void run(){
-                int totalDuration = projectMP.getDuration();
-                int currentPosition = 0;
+                long totalDuration = getSong.get(position).getDuration();
+                long currentPosition = 0;
 
                 while (currentPosition < totalDuration){
                     try {
                         sleep(500);
-                        currentPosition = projectMP.getCurrentPosition();
-                        songSeekbar.setProgress(currentPosition);
+                        currentPosition = getSong.get(position).getTrackPosition();
+                        songSeekbar.setProgress((int) currentPosition);
                     }catch (InterruptedException ex){
                         ex.printStackTrace();
                     }catch (IllegalStateException ex){
@@ -78,30 +106,33 @@ public class PlayerActivity extends AppCompatActivity {
                 }
             }
         };
-        if(projectMP != null){
-            projectMP.stop();
-            projectMP.release();
+        if(newPlayer != null){
+            newPlayer.stop();
+            newPlayer.release();
         }
 
         Intent i = getIntent();
         Bundle bundle = i.getExtras();
+        position = bundle.getInt("pos", 0);
 
-        getSong = (ArrayList) bundle.getParcelableArrayList("songs");
+
+        getSong = getIntent().getParcelableArrayListExtra("tracks");
 
         sName = getSong.get(position).getTitle().toString();
 
 
-        String songName = i.getStringExtra("songname");
-        songTextLabel.setText(songName.replace("mp3", ""));
+        String songName = getSong.get(position).getTitle().toString();
+        songTextLabel.setText(songName);
         songTextLabel.setSelected(true);
 
-        position = bundle.getInt("pos", 0);
+//        position = bundle.getInt("pos", 0);
 
-        Uri u = Uri.parse(getSong.get(position).toString());
+        try {
+            newPlayer = new TrackPlayer(getApplication(), deezerConnect, new WifiAndMobileNetworkStateChecker());
+            newPlayer.playTrack(getSong.get(position).getId());
 
-        projectMP =  MediaPlayer.create(getApplicationContext(), u);
-        mPlayer.play();
-        songSeekbar.setMax(projectMP.getDuration());
+
+        songSeekbar.setMax((getSong.get(position).getDuration()));
 
         updateSeekBar.start();
 
@@ -118,21 +149,21 @@ public class PlayerActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                projectMP.seekTo(seekBar.getProgress());
+                newPlayer.seek(seekBar.getProgress());
             }
         });
 
         btn_pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                songSeekbar.setMax(projectMP.getDuration());
-
-                if (projectMP.isPlaying()){
+                songSeekbar.setMax(getSong.get(position).getDuration());
+                Log.d(TAG, "PLAYER STATUS: " + newPlayer.getPlayerState());
+                if (newPlayer.getPlayerState() == PlayerState.PLAYING){
                     btn_pause.setBackgroundResource(R.drawable.icon_play);
-                    projectMP.pause();
+                    newPlayer.pause();
                 }else{
                     btn_pause.setBackgroundResource(R.drawable.icon_pause);
-                    projectMP.start();
+                    newPlayer.play();
                 }
             }
         });
@@ -140,77 +171,70 @@ public class PlayerActivity extends AppCompatActivity {
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                projectMP.stop();
-                projectMP.release();
+                newPlayer.stop();
+                newPlayer.release();
 
                 position = ((position + 1) % getSong.size());
 
-                Uri u = Uri.parse(getSong.get(position).toString());
-                projectMP = MediaPlayer.create(getApplicationContext(), u);
 
                 sName = getSong.get(position).getTitle().toString();
                 songTextLabel.setText(sName);
-
-                projectMP.start();
+                try {
+                    newPlayer = new TrackPlayer(getApplication(),deezerConnect, new WifiAndMobileNetworkStateChecker());
+                } catch (TooManyPlayersExceptions tooManyPlayersExceptions) {
+                    tooManyPlayersExceptions.printStackTrace();
+                } catch (DeezerError deezerError) {
+                    deezerError.printStackTrace();
+                }
+                newPlayer.playTrack(getSong.get(position).getId());
             }
         });
 
         btn_previous.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                projectMP.stop();
-                projectMP.release();
+                newPlayer.stop();
+                newPlayer.release();
 
                 position = ((position - 1)<0) ? (getSong.size()-1):(position-1);
 
-                Uri u = Uri.parse(getSong.get(position).toString());
-                projectMP = MediaPlayer.create(getApplicationContext(), u);
 
                 sName = getSong.get(position).getTitle().toString();
                 songTextLabel.setText(sName);
 
-                projectMP.start();
+                try {
+                    newPlayer = new TrackPlayer(getApplication(),deezerConnect, new WifiAndMobileNetworkStateChecker());
+                } catch (TooManyPlayersExceptions tooManyPlayersExceptions) {
+                    tooManyPlayersExceptions.printStackTrace();
+                } catch (DeezerError deezerError) {
+                    deezerError.printStackTrace();
+                }
+                newPlayer.playTrack(getSong.get(position).getId());
+
             }
         });
-
-
-        @Override
-        protected void onDestroy() {
-            doDestroyPlayer();
-            super.onDestroy();
+        } catch (TooManyPlayersExceptions tooManyPlayersExceptions) {
+            tooManyPlayersExceptions.printStackTrace();
+        } catch (DeezerError deezerError) {
+            deezerError.printStackTrace();
         }
 
-        /**
-         * Will destroy player. Subclasses can override this hook.
-         */
-        protected void doDestroyPlayer() {
 
-            if (mPlayer == null) {
-                // No player, ignore
-                return;
-            }
 
-            if (mPlayer.getPlayerState() == PlayerState.RELEASED) {
-                // already released, ignore
-                return;
-            }
 
-            // first, stop the player if it is not
-            if (mPlayer.getPlayerState() != PlayerState.STOPPED) {
-                mPlayer.stop();
-            }
-
-            // then release it
-            mPlayer.release();
-        }
-    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item){
-//        if (item.getItemId() == android.R.id.home){
-//            onBackPressed();
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
 }
+    RequestListener listenerRequest = new JsonRequestListener() {
+
+        public void onResult(Object result, Object requestId) {
+            List<Album> albums = (List<Album>) result;
+            // do something with the albums
+
+        }
+
+        public void onUnparsedResult(String requestResponse, Object requestId) {}
+
+        public void onException(Exception e, Object requestId) {}
+    };
+
+}
+

@@ -33,7 +33,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerAdapter.ViewHolder holder, int position) {
         Track text = mData.get(position);
-        holder.myTextView.setText(text.getTitle());
+        holder.myTextView.setText((position + 1) + "." + text.getTitle());
     }
 
     @Override
